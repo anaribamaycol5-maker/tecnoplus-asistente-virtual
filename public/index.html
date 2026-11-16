@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TecnoPlus | Asistente Virtual</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #eef2f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 650px;
+            height: 650px;
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,.12);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #142b4a;
+            color: white;
+            padding: 22px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            background: #f5b82e;
+            color: #142b4a;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .header h1 {
+            font-size: 21px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #d4dfed;
+            margin-top: 5px;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 22px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .message {
+            max-width: 82%;
+            padding: 13px 16px;
+            border-radius: 15px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .bot {
+            background: #edf1f6;
+            color: #243247;
+            align-self: flex-start;
+        }
+
+        .user {
+            background: #1b4d80;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .input-area {
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid #ccd3dc;
+            border-radius: 10px;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .input-area button {
+            background: #f5b82e;
+            color: #142b4a;
+            border: none;
+            border-radius: 10px;
+            padding: 0 22px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .input-area button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 0 12px 13px;
+            color: #7b8491;
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="chat-container">
+
+        <header class="header">
+            <div class="logo">TP</div>
+            <div>
+                <h1>TecnoPlus</h1>
+                <p>Asistente virtual de atención al cliente</p>
+            </div>
+        </header>
+
+        <section class="messages" id="messages">
+            <div class="message bot">
+                ¡Hola! Bienvenido a TecnoPlus.
+                Soy tu asistente virtual. ¿En qué puedo ayudarte?
+            </div>
+        </section>
+
+        <form class="input-area" id="chatForm">
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Escribe tu pregunta..."
+                autocomplete="off"
+                required
+            >
+            <button type="submit" id="sendButton">Enviar</button>
+        </form>
+
+        <div class="footer">
+            TecnoPlus © 2026 | Atención virtual con inteligencia artificial
+        </div>
+
+    </main>
+
+    <script>
+        const form = document.getElementById("chatForm");
+        const input = document.getElementById("userInput");
+        const messages = document.getElementById("messages");
+        const sendButton = document.getElementById("sendButton");
+
+        function addMessage(text, type) {
+            const message = document.createElement("div");
+            message.className = `message ${type}`;
+            message.textContent = text;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const question = input.value.trim();
+
+            if (!question) return;
+
+            addMessage(question, "user");
+            input.value = "";
+            sendButton.disabled = true;
+            sendButton.textContent = "Enviando...";
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: question
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Error al consultar.");
+                }
+
+                addMessage(data.reply, "bot");
+
+            } catch (error) {
+                addMessage(
+                    "No pude responder en este momento. Intenta nuevamente.",
+                    "bot"
+                );
+                console.error(error);
+
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = "Enviar";
+                input.focus();
+            }
+        });
+    </script>
+
+</body>
+</html>
